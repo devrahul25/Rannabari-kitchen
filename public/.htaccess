@@ -1,0 +1,7 @@
+RewriteEngine On
+
+# Redirect non-www to www (301 permanent)
+# Skip redirect for API calls to prevent cross-origin CORS issues
+RewriteCond %{HTTP_HOST} !^www\. [NC]
+RewriteCond %{REQUEST_URI} !^/api/ [NC]
+RewriteRule ^(.*)$ https://www.%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
