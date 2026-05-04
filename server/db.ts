@@ -120,6 +120,23 @@ export async function initDb(): Promise<void> {
     // Column already exists — ignore
   }
 
+  // Migration: add is_tiffin column if it doesn't exist yet
+  try {
+    db.exec('ALTER TABLE menus ADD COLUMN is_tiffin INTEGER DEFAULT 0');
+  } catch (_) {
+    // Column already exists — ignore
+  }
+
+  // Migration: Backfill data for existing rows if needed
+  try {
+    // Set available_days to Everyday for items that have it as NULL
+    db.prepare("UPDATE menus SET available_days = 'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday' WHERE available_days IS NULL").run();
+    // Set is_tiffin based on category for items that have it as 0/NULL and are in Tiffin categories
+    db.prepare("UPDATE menus SET is_tiffin = 1 WHERE is_tiffin = 0 AND category IN ('Breakfast', 'Lunch', 'Dinner')").run();
+  } catch (err) {
+    console.error('Data backfill migration error:', err);
+  }
+
   // Seed SEO pages if table is empty
   const seoCount = db.prepare('SELECT COUNT(*) as count FROM seo_settings').get() as { count: number };
   if (seoCount && seoCount.count === 0) {

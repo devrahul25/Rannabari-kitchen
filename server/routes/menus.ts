@@ -10,7 +10,7 @@ function mapRow(row: Record<string, unknown>) {
   const tags = tag ? tag.split(',').map((t: string) => t.trim()).filter(Boolean) : [];
   const daysStr = (row.available_days as string | null) || '';
   const availableDays = daysStr ? daysStr.split(',').map((d: string) => d.trim()).filter(Boolean) : [];
-  const isTiffin = Boolean(row.is_tiffin);
+  const isTiffin = row.is_tiffin === 1 || row.is_tiffin === '1' || row.is_tiffin === true;
   const { tag: _t, available_days: _d, is_tiffin: _i, ...rest } = row;
   return { ...rest, tags, availableDays, isTiffin };
 }
