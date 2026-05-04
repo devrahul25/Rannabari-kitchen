@@ -23,4 +23,4 @@ export const menuItems = [
   { id: 22, name: "Rosogolla", description: "Spongy cottage cheese balls soaked in light sugar syrup, a quintessential Bengali sweet.", price: "₹100", portion: "4 Pcs, Serves 2", category: "Desserts", dietary: "Veg", img: "https://images.unsplash.com/photo-1605197132819-d29314451009?q=80&w=800&auto=format&fit=crop" },
 ];
 
-export const categories = ["All", "Veg", "Non Veg", "Starters", "Main Course", "Desserts", "Popular", "Signature"];
+export const categories = ["All", "Veg", "Non Veg", "Starters", "Main Course", "Desserts", "Breakfast", "Lunch", "Dinner", "Popular", "Signature"];

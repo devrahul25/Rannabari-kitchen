@@ -6,8 +6,9 @@ import { useMenuData } from '../../context/MenuDataContext';
 import { MenuItem } from '../../services/api';
 
 const DIETARY_OPTIONS = ['All', 'Veg', 'Non Veg'];
-const CATEGORY_OPTIONS = ['All', 'Starters', 'Main Course', 'Desserts'];
+const CATEGORY_OPTIONS = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Starters', 'Main Course', 'Combos', 'Chatni', 'Sweets', 'Desserts'];
 const TAG_OPTIONS = ['All', 'Signature', 'Popular', 'None'];
+const DAY_OPTIONS = ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 function escapeCell(value: string | string[]): string {
   const str = Array.isArray(value) ? value.join(',') : (value ?? '');
@@ -49,6 +50,8 @@ export default function AdminMenuList() {
   const [filterDietary, setFilterDietary] = useState('All');
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterTag, setFilterTag] = useState('All');
+  const [filterDay, setFilterDay] = useState('All');
+  const [filterTiffin, setFilterTiffin] = useState('All');
   const [deleteTarget, setDeleteTarget] = useState<MenuItem | null>(null);
 
   const filtered = menuItems.filter((item) => {
@@ -60,7 +63,9 @@ export default function AdminMenuList() {
     const matchTag =
       filterTag === 'All' ||
       (filterTag === 'None' ? item.tags.length === 0 : item.tags.includes(filterTag));
-    return matchSearch && matchDietary && matchCategory && matchTag;
+    const matchDay = filterDay === 'All' || item.availableDays?.includes(filterDay);
+    const matchTiffin = filterTiffin === 'All' || (filterTiffin === 'Tiffin' ? item.isTiffin : !item.isTiffin);
+    return matchSearch && matchDietary && matchCategory && matchTag && matchDay && matchTiffin;
   });
 
   const handleExport = () => {
@@ -75,6 +80,7 @@ export default function AdminMenuList() {
         escapeCell(item.dietary),
         escapeCell(item.tags),
         escapeCell(item.img),
+        escapeCell(item.availableDays || []),
       ].join(',')
     );
     const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
@@ -162,6 +168,22 @@ export default function AdminMenuList() {
         >
           {TAG_OPTIONS.map((o) => <option key={o}>{o}</option>)}
         </select>
+        <select
+          value={filterDay}
+          onChange={(e) => setFilterDay(e.target.value)}
+          className="px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+        >
+          {DAY_OPTIONS.map((o) => <option key={o}>{o}</option>)}
+        </select>
+        <select
+          value={filterTiffin}
+          onChange={(e) => setFilterTiffin(e.target.value)}
+          className="px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+        >
+          <option value="All">All Menu Types</option>
+          <option value="Regular">Regular Only</option>
+          <option value="Tiffin">Tiffin Only</option>
+        </select>
       </div>
 
       {/* Table */}
@@ -182,8 +204,10 @@ export default function AdminMenuList() {
                   <th className="text-left px-4 py-3 text-stone-500 font-medium">Name</th>
                   <th className="text-left px-4 py-3 text-stone-500 font-medium">Category</th>
                   <th className="text-left px-4 py-3 text-stone-500 font-medium">Dietary</th>
+                  <th className="text-left px-4 py-3 text-stone-500 font-medium">Type</th>
+                  <th className="text-left px-4 py-3 text-stone-500 font-medium">Available Days</th>
                   <th className="text-left px-4 py-3 text-stone-500 font-medium">Tag</th>
-                  <th className="text-left px-4 py-3 text-stone-500 font-medium">Portion</th>
+                  <th className="text-left px-4 py-3 text-stone-500 font-medium w-24">Portion</th>
                   <th className="text-right px-4 py-3 text-stone-500 font-medium">Price</th>
                   <th className="text-right px-4 py-3 text-stone-500 font-medium w-24">Actions</th>
                 </tr>
@@ -211,6 +235,20 @@ export default function AdminMenuList() {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${item.dietary === 'Veg' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {item.dietary}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${item.isTiffin ? 'bg-orange-100 text-orange-700' : 'bg-stone-100 text-stone-600'}`}>
+                        {item.isTiffin ? 'Tiffin' : 'Regular'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1 max-w-[200px]">
+                        {item.availableDays && item.availableDays.length === 7 ? (
+                          <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 text-[10px] font-bold">Every Day</span>
+                        ) : item.availableDays?.map(d => (
+                          <span key={d} className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 text-[10px] font-medium">{d.slice(0,3)}</span>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       {item.tags && item.tags.length > 0 ? (

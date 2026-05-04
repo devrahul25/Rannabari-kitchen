@@ -26,7 +26,7 @@ const DEFAULT_MENUS = [
   { name: "Rohu Fish Pulao", description: "Spiced pulao rice cooked with Rohu fish pieces, aromatic and flavorful, blending fish curry taste with rice.", price: "₹700", portion: "750 ML, Serves 2", category: "Main Course", dietary: "Non Veg", tag: null, img: "https://images.unsplash.com/photo-1512058564366-18510be2db19?q=80&w=800&auto=format&fit=crop" },
   { name: "Rohu Kalia", description: "Rohu fish cooked in a rich, spicy Bengali gravy, slightly thick and perfect with steamed rice.", price: "₹650", portion: "3 Pcs, Serves 2", category: "Main Course", dietary: "Non Veg", tag: null, img: "https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?q=80&w=800&auto=format&fit=crop" },
   { name: "Mishti Doi", description: "Classic Bengali sweet yogurt, rich, creamy, and perfectly caramelized.", price: "₹150", portion: "250 ML, Serves 2", category: "Desserts", dietary: "Veg", tag: "Popular", img: "https://images.unsplash.com/photo-1563805042-7684c8a9e9cb?q=80&w=800&auto=format&fit=crop" },
-  { name: "Rosogolla", description: "Spongy cottage cheese balls soaked in light sugar syrup, a quintessential Bengali sweet.", price: "₹100", portion: "4 Pcs, Serves 2", category: "Desserts", dietary: "Veg", tag: null, img: "https://images.unsplash.com/photo-1605197132819-d29314451009?q=80&w=800&auto=format&fit=crop" },
+  { name: "Rosogolla", description: "Spongy cottage cheese balls soaked in light sugar syrup, a quintessential Bengali sweet.", price: "₹100", portion: "4 Pcs, Serves 2", category: "Desserts", dietary: "Veg", tag: null, img: "https://images.unsplash.com/photo-1605197132819-d29314451009?q=80&w=800&auto=format&fit=crop", available_days: "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday" },
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,6 +55,8 @@ export async function initDb(): Promise<void> {
       dietary TEXT NOT NULL,
       tag TEXT,
       img TEXT,
+      available_days TEXT,
+      is_tiffin INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -104,6 +106,20 @@ export async function initDb(): Promise<void> {
     // Column already exists — ignore
   }
 
+  // Migration: add available_days column if it doesn't exist yet
+  try {
+    db.exec('ALTER TABLE menus ADD COLUMN available_days TEXT');
+  } catch (_) {
+    // Column already exists — ignore
+  }
+
+  // Migration: add is_tiffin column if it doesn't exist yet
+  try {
+    db.exec('ALTER TABLE menus ADD COLUMN is_tiffin INTEGER DEFAULT 0');
+  } catch (_) {
+    // Column already exists — ignore
+  }
+
   // Seed SEO pages if table is empty
   const seoCount = db.prepare('SELECT COUNT(*) as count FROM seo_settings').get() as { count: number };
   if (seoCount && seoCount.count === 0) {
@@ -146,10 +162,11 @@ export async function initDb(): Promise<void> {
   const menuCount = db.prepare('SELECT COUNT(*) as count FROM menus').get() as { count: number };
   if (menuCount && menuCount.count === 0) {
     const stmt = db.prepare(
-      'INSERT INTO menus (name, description, price, portion, category, dietary, tag, img) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO menus (name, description, price, portion, category, dietary, tag, img, available_days, is_tiffin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     for (const menu of DEFAULT_MENUS) {
-      stmt.run(menu.name, menu.description, menu.price, menu.portion, menu.category, menu.dietary, menu.tag ?? null, menu.img);
+      const isTiffin = ['Breakfast', 'Lunch', 'Dinner'].includes(menu.category) ? 1 : 0;
+      stmt.run(menu.name, menu.description, menu.price, menu.portion, menu.category, menu.dietary, menu.tag ?? null, menu.img, (menu as any).available_days || "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday", isTiffin);
     }
     console.log(`Seeded ${DEFAULT_MENUS.length} default menu items`);
   }

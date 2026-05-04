@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { api, MenuItem, MenuItemInput } from '../services/api';
 
-const PREFERRED_FILTER_ORDER = ['Starters', 'Main Course', 'Combos', 'Chatni', 'Sweets', 'Signature', 'Popular'];
+const PREFERRED_FILTER_ORDER = ['Breakfast', 'Lunch', 'Dinner', 'Starters', 'Main Course', 'Combos', 'Chatni', 'Sweets', 'Signature', 'Popular'];
 
 interface MenuDataContextType {
   menuItems: MenuItem[];

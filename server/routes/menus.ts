@@ -8,8 +8,11 @@ const router = Router();
 function mapRow(row: Record<string, unknown>) {
   const tag = (row.tag as string | null) || '';
   const tags = tag ? tag.split(',').map((t: string) => t.trim()).filter(Boolean) : [];
-  const { tag: _t, ...rest } = row;
-  return { ...rest, tags };
+  const daysStr = (row.available_days as string | null) || '';
+  const availableDays = daysStr ? daysStr.split(',').map((d: string) => d.trim()).filter(Boolean) : [];
+  const isTiffin = Boolean(row.is_tiffin);
+  const { tag: _t, available_days: _d, is_tiffin: _i, ...rest } = row;
+  return { ...rest, tags, availableDays, isTiffin };
 }
 
 // Serialize tags[] → comma-separated DB string
@@ -19,6 +22,14 @@ function serializeTags(tags: unknown): string | null {
     return val || null;
   }
   if (typeof tags === 'string') return tags || null;
+  return null;
+}
+
+function serializeDays(days: unknown): string | null {
+  if (Array.isArray(days)) {
+    return (days as string[]).filter(Boolean).join(',') || null;
+  }
+  if (typeof days === 'string') return days || null;
   return null;
 }
 
@@ -36,7 +47,7 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
 
 // Admin: Create a menu
 router.post('/', authenticateAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { name, description, price, portion, category, dietary, tags, img } = req.body;
+  const { name, description, price, portion, category, dietary, tags, img, availableDays, isTiffin } = req.body;
 
   if (!name || !price || !category || !dietary) {
     res.status(400).json({ error: 'name, price, category, and dietary are required' });
@@ -46,8 +57,8 @@ router.post('/', authenticateAdmin, async (req: AuthRequest, res: Response): Pro
   try {
     const db = getDb();
     const result = db.prepare(
-      'INSERT INTO menus (name, description, price, portion, category, dietary, tag, img) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    ).run(name, description || '', price, portion || '', category, dietary, serializeTags(tags), img || '');
+      'INSERT INTO menus (name, description, price, portion, category, dietary, tag, img, available_days, is_tiffin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(name, description || '', price, portion || '', category, dietary, serializeTags(tags), img || '', serializeDays(availableDays), isTiffin ? 1 : 0);
     const created = db.prepare('SELECT * FROM menus WHERE id = ?').get(Number(result.lastInsertRowid)) as Record<string, unknown>;
     res.status(201).json(mapRow(created));
   } catch (err) {
@@ -59,7 +70,7 @@ router.post('/', authenticateAdmin, async (req: AuthRequest, res: Response): Pro
 // Admin: Update a menu
 router.put('/:id', authenticateAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const { name, description, price, portion, category, dietary, tags, img } = req.body;
+  const { name, description, price, portion, category, dietary, tags, img, availableDays, isTiffin } = req.body;
 
   if (!name || !price || !category || !dietary) {
     res.status(400).json({ error: 'name, price, category, and dietary are required' });
@@ -75,8 +86,8 @@ router.put('/:id', authenticateAdmin, async (req: AuthRequest, res: Response): P
     }
 
     db.prepare(
-      'UPDATE menus SET name=?, description=?, price=?, portion=?, category=?, dietary=?, tag=?, img=? WHERE id=?'
-    ).run(name, description || '', price, portion || '', category, dietary, serializeTags(tags), img || '', id);
+      'UPDATE menus SET name=?, description=?, price=?, portion=?, category=?, dietary=?, tag=?, img=?, available_days=?, is_tiffin=? WHERE id=?'
+    ).run(name, description || '', price, portion || '', category, dietary, serializeTags(tags), img || '', serializeDays(availableDays), isTiffin ? 1 : 0, id);
     const updated = db.prepare('SELECT * FROM menus WHERE id = ?').get(id) as Record<string, unknown>;
     res.json(mapRow(updated));
   } catch (err) {
@@ -108,7 +119,7 @@ router.delete('/:id', authenticateAdmin, async (req: AuthRequest, res: Response)
 // Admin: Bulk import menus
 router.post('/import', authenticateAdmin, async (req: AuthRequest, res: Response): Promise<void> => {
   const { items, mode } = req.body as {
-    items: Array<{ name: string; description?: string; price: string; portion?: string; category: string; dietary: string; tags?: string[]; img?: string }>;
+    items: Array<{ name: string; description?: string; price: string; portion?: string; category: string; dietary: string; tags?: string[]; img?: string; availableDays?: string[]; isTiffin?: boolean }>;
     mode: 'append' | 'replace';
   };
 
@@ -131,10 +142,10 @@ router.post('/import', authenticateAdmin, async (req: AuthRequest, res: Response
     }
 
     const stmt = db.prepare(
-      'INSERT INTO menus (name, description, price, portion, category, dietary, tag, img) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO menus (name, description, price, portion, category, dietary, tag, img, available_days, is_tiffin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     for (const item of items) {
-      stmt.run(item.name, item.description || '', item.price, item.portion || '', item.category, item.dietary, serializeTags(item.tags), item.img || '');
+      stmt.run(item.name, item.description || '', item.price, item.portion || '', item.category, item.dietary, serializeTags(item.tags), item.img || '', serializeDays(item.availableDays), item.isTiffin ? 1 : 0);
     }
 
     const allRows = db.prepare('SELECT * FROM menus ORDER BY id ASC').all() as Record<string, unknown>[];

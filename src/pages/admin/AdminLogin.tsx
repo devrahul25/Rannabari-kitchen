@@ -35,7 +35,7 @@ export default function AdminLogin() {
         <div className="text-center mb-8">
           <div className="w-auto h-32 bg-transparent rounded-2xl flex items-center justify-center mx-auto mb-4">
             {/* <ChefHat size={32} className="text-white" /> */}
-              <img src="https://babos.jaiveeru.site/uploads/gallery/logo-d.svg" alt="Babo's Home Kitchen" className="h-32 w-auto" />
+              <img src="/Logo-for-website.svg" alt="Rannabari Kitchen Logo" className="h-32 w-auto" />
           </div>
           {/* <h1 className="text-2xl font-bold text-white">Babo's Kitchen</h1> */}
           {/* <p className="text-stone-400 text-sm mt-1">Admin Panel</p> */}

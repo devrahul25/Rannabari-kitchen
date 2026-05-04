@@ -8,6 +8,8 @@ export interface MenuItem {
   dietary: string;
   tags: string[];        // e.g. ["Signature", "Popular"]
   img: string;
+  availableDays: string[];
+  isTiffin: boolean;
 }
 
 export type MenuItemInput = Omit<MenuItem, 'id'>;

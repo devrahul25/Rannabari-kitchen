@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "tsx watch server/index.ts",
-    "dev:full": "start /B tsx watch server/index.ts && vite",
+    "dev:full": "tsx watch server/index.ts & vite",
     "build": "vite build",
     "build:server": "tsc --project tsconfig.server.json",
     "build:all": "npm run build && npm run build:server",

@@ -12,8 +12,20 @@ export default function Menu() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
   const [dietaryFilter, setDietaryFilter] = useState<'All' | 'Veg'>('All');
+  const [menuMode, setMenuMode] = useState<'ALL' | 'TIFFIN'>('ALL');
+  const [selectedDay, setSelectedDay] = useState<string>(() => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[new Date().getDay()];
+  });
+  const [isDaySelected, setIsDaySelected] = useState(false);
   const { cart, addToCart, updateQuantity } = useCart();
   const { menuItems, categories, loading, error } = useMenuData();
+
+  const DAYS_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const todayIndex = (new Date().getDay() + 6) % 7; // Monday = 0
+  const selectedDayIndex = DAYS_ORDER.indexOf(selectedDay);
+  const isPastDay = selectedDayIndex < todayIndex;
+  const isToday = selectedDayIndex === todayIndex;
 
   // Body scroll lock + signal FloatingCart to hide
   useEffect(() => {
@@ -49,6 +61,14 @@ export default function Menu() {
   };
 
   const filteredItems = menuItems.filter(item => {
+    // Mode specific filtering
+    if (menuMode === 'TIFFIN') {
+      if (!item.isTiffin) return false;
+      if (!item.availableDays?.includes(selectedDay)) return false;
+    } else {
+      if (item.isTiffin) return false;
+    }
+
     const matchesCategory = activeCategories.length === 0 || activeCategories.some(c => {
       const lowerC = c.toLowerCase();
       return item.category.toLowerCase() === lowerC ||
@@ -58,6 +78,16 @@ export default function Menu() {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           item.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesDietary && matchesSearch;
+  });
+
+  const availableCategories = categories.filter(c => {
+    if (c === 'Veg' || c === 'Non Veg') return false;
+    // For Tiffin mode, only show categories that have tiffin items
+    // For All mode, only show categories that have non-tiffin items
+    return menuItems.some(item => 
+      item.category === c && 
+      (menuMode === 'TIFFIN' ? item.isTiffin : !item.isTiffin)
+    );
   });
 
   if (loading) {
@@ -131,11 +161,100 @@ export default function Menu() {
         <div className="relative text-center">
           <p className="text-orange-300 text-sm font-semibold uppercase tracking-widest mb-2">Babo's Home Kitchen</p>
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-white">Our Menu</h1>
+          {menuMode === 'TIFFIN' && isDaySelected && (
+            <button 
+              onClick={() => setIsDaySelected(false)}
+              className="mt-4 px-4 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-white text-xs font-semibold transition-colors flex items-center gap-2 mx-auto"
+            >
+              <span>{selectedDay} Menu</span>
+              <Filter size={14} />
+              <span className="opacity-70">(Change Day)</span>
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="bg-stone-50 min-h-screen py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {menuMode === 'TIFFIN' && !isDaySelected ? (
+        <div className="bg-stone-50 min-h-[60vh] flex items-center justify-center py-16 px-4">
+          {/* ... day selector code ... */}
+          <div className="max-w-4xl w-full text-center">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-stone-900 mb-4">What day are you planning for?</h2>
+            <p className="text-stone-600 mb-10 max-w-lg mx-auto">Our tiffin service menu changes daily. Select a day to view our special offerings.</p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              {DAYS_ORDER.map((day, idx) => {
+                const isPast = idx < todayIndex;
+                const isDayToday = idx === todayIndex;
+                return (
+                  <button
+                    key={day}
+                    onClick={() => {
+                      setSelectedDay(day);
+                      setIsDaySelected(true);
+                    }}
+                    className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${
+                      isDayToday 
+                        ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-200' 
+                        : 'border-white bg-white hover:border-orange-200'
+                    } ${isPast ? 'opacity-60 grayscale-[0.5]' : ''} group shadow-sm`}
+                  >
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isDayToday ? 'text-orange-600' : 'text-stone-400'}`}>
+                      {isDayToday ? 'Today' : idx === todayIndex + 1 ? 'Tomorrow' : 'Day'}
+                    </span>
+                    <span className="text-lg font-bold text-stone-800">{day}</span>
+                    {isPast && <span className="text-[10px] font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">Viewing Only</span>}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button 
+              onClick={() => setMenuMode('ALL')}
+              className="mt-12 text-stone-500 hover:text-stone-800 font-medium underline underline-offset-4 decoration-stone-300"
+            >
+              Back to regular menu
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-stone-50 min-h-screen py-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            {/* Menu Mode Toggle */}
+            <div className="flex justify-center mb-8">
+              <div className="bg-white p-1 rounded-2xl border border-stone-200 shadow-sm flex items-center gap-1">
+                <button
+                  onClick={() => { setMenuMode('ALL'); setIsDaySelected(false); }}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    menuMode === 'ALL' 
+                      ? 'bg-stone-900 text-white shadow-md' 
+                      : 'text-stone-500 hover:bg-stone-50'
+                  }`}
+                >
+                  All Menu
+                </button>
+                <button
+                  onClick={() => setMenuMode('TIFFIN')}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    menuMode === 'TIFFIN' 
+                      ? 'bg-orange-600 text-white shadow-md' 
+                      : 'text-stone-500 hover:bg-stone-50'
+                  }`}
+                >
+                  Tiffin Service
+                </button>
+              </div>
+            </div>
+            
+            {menuMode === 'TIFFIN' && isPastDay && (
+              <div className="mb-8 bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3">
+                <Info className="text-amber-600 shrink-0 mt-0.5" size={20} />
+                <div>
+                  <p className="text-amber-800 font-semibold text-sm">You are viewing a past menu ({selectedDay}).</p>
+                  <p className="text-amber-700 text-xs mt-0.5">Ordering is disabled for this day. Please select today or a future date to place an order.</p>
+                </div>
+              </div>
+            )}
 
           {/* Mobile: search button + filter icon row + dietary toggle */}
           <div className="md:hidden space-y-3 mb-8">
@@ -221,7 +340,7 @@ export default function Menu() {
 
           {/* Categories (desktop only) */}
           <div className="hidden md:flex flex-wrap justify-center gap-3 mb-12">
-          {categories.filter(c => c !== 'Veg' && c !== 'Non Veg').map(category => {
+          {availableCategories.map(category => {
             const isActive = activeCategories.includes(category);
             return (
               <button
@@ -304,12 +423,23 @@ export default function Menu() {
                     </div>
                   ) : (
                     <button
-                      onClick={() => addToCart({ id: item.id, name: item.name, price: item.price })}
-                      className="w-full flex items-center justify-center gap-1 sm:gap-2 bg-white border-2 border-orange-600 text-orange-600 px-2 sm:px-4 py-2 rounded-lg font-medium hover:bg-orange-50 transition-colors text-sm sm:text-base"
+                      onClick={() => !isPastDay && addToCart({ id: item.id, name: item.name, price: item.price })}
+                      disabled={isPastDay}
+                      className={`w-full flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${
+                        isPastDay 
+                          ? 'bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
+                          : 'bg-white border-2 border-orange-600 text-orange-600 hover:bg-orange-50'
+                      }`}
                     >
-                      <ShoppingCart size={16} className="shrink-0" />
-                      <span className="hidden sm:inline">Add to Cart</span>
-                      <span className="sm:hidden">Add</span>
+                      {isPastDay ? (
+                        <>Ordering Closed</>
+                      ) : (
+                        <>
+                          <ShoppingCart size={16} className="shrink-0" />
+                          <span className="hidden sm:inline">Add to Cart</span>
+                          <span className="sm:hidden">Add</span>
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
@@ -327,9 +457,11 @@ export default function Menu() {
           />
         </div>
 
+        </div>
       </div>
+    )}
 
-      <GallerySection />
+    <GallerySection />
 
       {/* ── Mobile Item Detail Bottom Sheet (md:hidden) ───────────────── */}
       {selectedItem && (
@@ -414,11 +546,20 @@ export default function Menu() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => addToCart({ id: selectedItem.id, name: selectedItem.name, price: selectedItem.price })}
-                    className="w-full flex items-center justify-center gap-2 bg-orange-600 text-white px-6 py-4 rounded-xl font-semibold text-lg hover:bg-orange-700 transition-colors"
+                    onClick={() => !isPastDay && addToCart({ id: selectedItem.id, name: selectedItem.name, price: selectedItem.price })}
+                    disabled={isPastDay}
+                    className={`w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-lg transition-colors ${
+                      isPastDay
+                        ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+                        : 'bg-orange-600 text-white hover:bg-orange-700'
+                    }`}
                   >
-                    <ShoppingCart size={20} />
-                    Add to Cart
+                    {isPastDay ? 'Ordering Closed' : (
+                      <>
+                        <ShoppingCart size={20} />
+                        Add to Cart
+                      </>
+                    )}
                   </button>
                 );
               })()}
@@ -512,7 +653,7 @@ export default function Menu() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {categories.filter(c => c !== 'Veg' && c !== 'Non Veg').map(category => {
+              {availableCategories.map(category => {
                 const isActive = activeCategories.includes(category);
                 return (
                   <button
@@ -530,7 +671,6 @@ export default function Menu() {
           </div>
         </div>
       )}
-    </div>
     </>
   );
 }

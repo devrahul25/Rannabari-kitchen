@@ -5,9 +5,10 @@ import { toast } from 'sonner';
 import { useMenuData } from '../../context/MenuDataContext';
 import { MenuItemInput } from '../../services/api';
 
-const CATEGORIES = ['Starters', 'Main Course', 'Combos', 'Chatni', 'Sweets', 'Desserts'];
+const CATEGORIES = ['Starters', 'Main Course', 'Combos', 'Chatni', 'Sweets', 'Desserts', 'Breakfast', 'Lunch', 'Dinner'];
 const DIETARY = ['Veg', 'Non Veg'];
 const TAG_OPTIONS = ['Signature', 'Popular'];
+const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const EMPTY_FORM: MenuItemInput = {
   name: '',
@@ -18,6 +19,8 @@ const EMPTY_FORM: MenuItemInput = {
   dietary: 'Veg',
   tags: [],
   img: '',
+  availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+  isTiffin: false,
 };
 
 function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
@@ -57,6 +60,18 @@ export default function AdminMenuForm() {
     }));
   };
 
+  const toggleDay = (day: string) => {
+    setForm((prev) => {
+      const current = prev.availableDays || [];
+      return {
+        ...prev,
+        availableDays: current.includes(day)
+          ? current.filter((d) => d !== day)
+          : [...current, day],
+      };
+    });
+  };
+
   useEffect(() => {
     if (isEdit && id) {
       const item = menuItems.find((m) => String(m.id) === id);
@@ -70,6 +85,8 @@ export default function AdminMenuForm() {
           dietary: item.dietary,
           tags: item.tags || [],
           img: item.img || '',
+          availableDays: item.availableDays || [],
+          isTiffin: item.isTiffin || false,
         });
       }
     }
@@ -224,6 +241,43 @@ export default function AdminMenuForm() {
           </div>
           {errors.img && <p className="text-red-500 text-xs mt-1">{errors.img}</p>}
         </FormField>
+
+        {/* Available Days */}
+        <FormField label="Available Days (When can people order this?)" required>
+          <div className="flex flex-wrap gap-4 pt-1 bg-stone-50 p-4 rounded-lg border border-stone-100">
+            {DAYS_OF_WEEK.map((day) => (
+              <label key={day} className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={form.availableDays?.includes(day)}
+                  onChange={() => toggleDay(day)}
+                  className="accent-orange-500 w-4 h-4 rounded cursor-pointer"
+                />
+                <span className={`text-sm font-medium ${form.availableDays?.includes(day) ? 'text-stone-900' : 'text-stone-400'}`}>
+                  {day}
+                </span>
+              </label>
+            ))}
+          </div>
+          {form.availableDays?.length === 0 && <p className="text-red-500 text-xs mt-1">Please select at least one day.</p>}
+        </FormField>
+
+        {/* Tiffin Service Toggle */}
+        <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-bold text-orange-900">Tiffin Service</p>
+            <p className="text-xs text-orange-700">Mark this dish to show in the "Tiffin Service" menu mode.</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={form.isTiffin} 
+              onChange={(e) => setForm(prev => ({ ...prev, isTiffin: e.target.checked }))}
+              className="sr-only peer" 
+            />
+            <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+          </label>
+        </div>
 
         {/* Submit */}
         <div className="flex items-center justify-end gap-3 pt-2 border-t border-stone-100">

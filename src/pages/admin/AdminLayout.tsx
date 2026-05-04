@@ -28,7 +28,7 @@ export default function AdminLayout() {
         <div className="p-6 border-b border-stone-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl overflow-hidden">
-              <img src="https://baboshomekitchen.in/uploads/gallery/fav.png" alt="Babo's Kitchen" className="w-full h-full object-cover" />
+              <img src="/Logo-for-website.svg" alt="Rannabari Kitchen Logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <div className="font-bold text-sm leading-tight">Babo's Kitchen</div>

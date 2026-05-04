@@ -43,9 +43,9 @@ function parseCSV(text: string): { rows: MenuItemInput[]; errors: string[] } {
     if (!row.category) { errors.push(`Row ${rowNum}: "category" is required`); continue; }
     if (!row.dietary) { errors.push(`Row ${rowNum}: "dietary" is required`); continue; }
 
-    const validCategories = ['starters', 'main course', 'combos', 'chatni', 'sweets', 'desserts'];
+    const validCategories = ['starters', 'main course', 'combos', 'chatni', 'sweets', 'desserts', 'breakfast', 'lunch', 'dinner'];
     if (!validCategories.includes(row.category.toLowerCase())) {
-      errors.push(`Row ${rowNum}: category must be Starters, Main Course, Combos, Chatni, or Sweets (got "${row.category}")`);
+      errors.push(`Row ${rowNum}: category must be Starters, Main Course, Combos, Chatni, Sweets, Desserts, Breakfast, Lunch, or Dinner (got "${row.category}")`);
       continue;
     }
     const validDietary = ['veg', 'non veg'];
@@ -100,7 +100,7 @@ function capitalizeFirst(str: string): string {
 }
 
 function capitalizeCategory(c: string): string {
-  const map: Record<string, string> = { 'starters': 'Starters', 'main course': 'Main Course', 'combos': 'Combos', 'chatni': 'Chatni', 'sweets': 'Sweets', 'desserts': 'Desserts' };
+  const map: Record<string, string> = { 'starters': 'Starters', 'main course': 'Main Course', 'combos': 'Combos', 'chatni': 'Chatni', 'sweets': 'Sweets', 'desserts': 'Desserts', 'breakfast': 'Breakfast', 'lunch': 'Lunch', 'dinner': 'Dinner' };
   return map[c.toLowerCase()] || c;
 }
 
@@ -187,7 +187,7 @@ export default function AdminCSVImport() {
             <ul className="space-y-0.5 text-blue-700">
               <li><code className="bg-blue-100 px-1 rounded">name</code> — Dish name</li>
               <li><code className="bg-blue-100 px-1 rounded">price</code> — e.g. <code>₹600</code> or <code>600</code></li>
-              <li><code className="bg-blue-100 px-1 rounded">category</code> — Starters / Main Course / Combos / Chatni / Sweets</li>
+              <li><code className="bg-blue-100 px-1 rounded">category</code> — Starters / Main Course / Combos / Chatni / Sweets / Desserts / Breakfast / Lunch / Dinner</li>
               <li><code className="bg-blue-100 px-1 rounded">dietary</code> — Veg / Non Veg</li>
             </ul>
           </div>
