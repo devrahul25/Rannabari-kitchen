@@ -25,5 +25,5 @@ export function authenticateAdmin(req: AuthRequest, res: Response, next: NextFun
 }
 
 export function generateToken(id: number): string {
-  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '8h' });
+  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '7d' });
 }

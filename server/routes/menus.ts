@@ -104,7 +104,7 @@ router.put('/:id', authenticateAdmin, async (req: AuthRequest, res: Response): P
       return;
     }
 
-    db.prepare(
+    const result = db.prepare(
       'UPDATE menus SET name=?, description=?, price=?, portion=?, category=?, dietary=?, tag=?, img=?, available_days=?, is_tiffin=? WHERE id=?'
     ).run(
       name, 
@@ -119,6 +119,7 @@ router.put('/:id', authenticateAdmin, async (req: AuthRequest, res: Response): P
       (isTiffin === true || isTiffin === 'true' || isTiffin === 1) ? 1 : 0, 
       id
     );
+    console.log(`Update result for item ${id}:`, result);
     const updated = db.prepare('SELECT * FROM menus WHERE id = ?').get(id) as Record<string, unknown>;
     res.json(mapRow(updated));
   } catch (err) {

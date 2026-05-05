@@ -44,7 +44,7 @@ export default function AdminMenuForm() {
 
   const [form, setForm] = useState<MenuItemInput>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const loadedRef = React.useRef(false);
   const [errors, setErrors] = useState<Partial<Record<keyof MenuItemInput, string>>>({});
 
   const set = (key: Exclude<keyof MenuItemInput, 'tags'>, value: string) => {
@@ -74,7 +74,7 @@ export default function AdminMenuForm() {
   };
 
   useEffect(() => {
-    if (isEdit && id && !dataLoaded) {
+    if (isEdit && id && !loadedRef.current) {
       const item = menuItems.find((m) => String(m.id) === id);
       if (item) {
         setForm({
@@ -89,10 +89,10 @@ export default function AdminMenuForm() {
           availableDays: item.availableDays || [],
           isTiffin: item.isTiffin || false,
         });
-        setDataLoaded(true);
+        loadedRef.current = true;
       }
     }
-  }, [isEdit, id, menuItems, dataLoaded]);
+  }, [isEdit, id, menuItems]);
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof MenuItemInput, string>> = {};

@@ -88,6 +88,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const data = await res.json().catch(() => ({ error: 'Invalid server response' }));
 
   if (!res.ok) {
+    if (res.status === 401) {
+      sessionStorage.removeItem('babos_admin_token');
+      sessionStorage.removeItem('babos_admin_user');
+      if (window.location.pathname.startsWith('/admin')) {
+        window.location.href = '/admin/login';
+      }
+    }
     throw new Error(data.error || `Request failed with status ${res.status}`);
   }
 
