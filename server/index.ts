@@ -56,6 +56,13 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '5mb' }));
+// Disable caching for all API routes
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
 
 // Serve uploaded gallery images as static files (dev mode; prod handled above)
 if (!IS_PROD) {

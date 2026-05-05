@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import bcrypt from 'bcryptjs';
+import path from 'path';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let db: any;
@@ -42,7 +43,9 @@ export function closeDb(): void {
 }
 
 export async function initDb(): Promise<void> {
-  db = new Database('./database.sqlite');
+  const dbPath = path.join(process.cwd(), 'database.sqlite');
+  console.log('Initializing database at:', dbPath);
+  db = new Database(dbPath);
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS menus (
