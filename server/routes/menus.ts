@@ -97,8 +97,10 @@ router.put('/:id', authenticateAdmin, async (req: AuthRequest, res: Response): P
 
   try {
     const db = getDb();
-    console.log(`Updating menu ${id}. Body:`, JSON.stringify(req.body));
-    const existing = db.prepare('SELECT id FROM menus WHERE id = ?').get(id);
+    const targetId = Number(id);
+    console.log(`[API] Updating menu ${targetId}. Body:`, JSON.stringify(req.body));
+    
+    const existing = db.prepare('SELECT id FROM menus WHERE id = ?').get(targetId);
     if (!existing) {
       res.status(404).json({ error: 'Menu item not found' });
       return;
@@ -117,10 +119,10 @@ router.put('/:id', authenticateAdmin, async (req: AuthRequest, res: Response): P
       img || '', 
       serializeDays(availableDays), 
       (isTiffin === true || isTiffin === 'true' || isTiffin === 1) ? 1 : 0, 
-      id
+      targetId
     );
-    console.log(`Update result for item ${id}:`, result);
-    const updated = db.prepare('SELECT * FROM menus WHERE id = ?').get(id) as Record<string, unknown>;
+    console.log(`Update result for item ${targetId}:`, result);
+    const updated = db.prepare('SELECT * FROM menus WHERE id = ?').get(targetId) as Record<string, unknown>;
     res.json(mapRow(updated));
   } catch (err) {
     console.error('Update menu error:', err);

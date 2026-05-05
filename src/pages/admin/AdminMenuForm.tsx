@@ -110,19 +110,20 @@ export default function AdminMenuForm() {
     if (!validate()) return;
 
     setSaving(true);
-    try {
       const payload: MenuItemInput = {
         name: form.name.trim(),
         description: form.description.trim(),
-        price: form.price.startsWith('₹') ? form.price.trim() : `₹${form.price.trim()}`,
+        price: String(form.price).startsWith('₹') ? String(form.price).trim() : `₹${String(form.price).trim()}`,
         portion: form.portion.trim(),
         category: form.category,
         dietary: form.dietary,
-        tags: form.tags,
+        tags: Array.isArray(form.tags) ? form.tags : [],
         img: form.img.trim(),
-        availableDays: form.availableDays,
-        isTiffin: form.isTiffin,
+        availableDays: Array.isArray(form.availableDays) ? form.availableDays : [],
+        isTiffin: Boolean(form.isTiffin),
       };
+
+      console.log('SUBMITTING PAYLOAD:', payload);
 
       if (isEdit && id) {
         await updateItem(Number(id), payload);
