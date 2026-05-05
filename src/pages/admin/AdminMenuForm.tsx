@@ -112,10 +112,16 @@ export default function AdminMenuForm() {
     setSaving(true);
     try {
       const payload: MenuItemInput = {
-        ...form,
         name: form.name.trim(),
+        description: form.description.trim(),
         price: form.price.startsWith('₹') ? form.price.trim() : `₹${form.price.trim()}`,
+        portion: form.portion.trim(),
+        category: form.category,
+        dietary: form.dietary,
+        tags: form.tags,
         img: form.img.trim(),
+        availableDays: form.availableDays,
+        isTiffin: form.isTiffin,
       };
 
       if (isEdit && id) {

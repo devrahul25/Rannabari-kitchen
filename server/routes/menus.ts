@@ -5,14 +5,21 @@ import { authenticateAdmin, AuthRequest } from '../middleware/auth.js';
 const router = Router();
 
 // Map DB row (tag TEXT) → API shape (tags string[])
-function mapRow(row: Record<string, unknown>) {
-  const tag = (row.tag as string | null) || '';
-  const tags = tag ? tag.split(',').map((t: string) => t.trim()).filter(Boolean) : [];
-  const daysStr = (row.available_days as string | null) || '';
-  const availableDays = daysStr ? daysStr.split(',').map((d: string) => d.trim()).filter(Boolean) : [];
-  const isTiffin = row.is_tiffin === 1 || row.is_tiffin === '1' || row.is_tiffin === true;
-  const { tag: _t, available_days: _d, is_tiffin: _i, ...rest } = row;
-  return { ...rest, tags, availableDays, isTiffin };
+// Map DB row → API shape
+function mapRow(row: any) {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description || '',
+    price: row.price,
+    portion: row.portion || '',
+    category: row.category,
+    dietary: row.dietary,
+    img: row.img || '',
+    tags: (row.tag || '').split(',').map((t: string) => t.trim()).filter(Boolean),
+    availableDays: (row.available_days || '').split(',').map((d: string) => d.trim()).filter(Boolean),
+    isTiffin: row.is_tiffin === 1 || row.is_tiffin === '1' || row.is_tiffin === true || row.is_tiffin === 'true',
+  };
 }
 
 // Serialize tags[] → comma-separated DB string
@@ -58,7 +65,18 @@ router.post('/', authenticateAdmin, async (req: AuthRequest, res: Response): Pro
     const db = getDb();
     const result = db.prepare(
       'INSERT INTO menus (name, description, price, portion, category, dietary, tag, img, available_days, is_tiffin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    ).run(name, description || '', price, portion || '', category, dietary, serializeTags(tags), img || '', serializeDays(availableDays), isTiffin ? 1 : 0);
+    ).run(
+      name, 
+      description || '', 
+      price, 
+      portion || '', 
+      category, 
+      dietary, 
+      serializeTags(tags), 
+      img || '', 
+      serializeDays(availableDays), 
+      (isTiffin === true || isTiffin === 'true' || isTiffin === 1) ? 1 : 0
+    );
     const created = db.prepare('SELECT * FROM menus WHERE id = ?').get(Number(result.lastInsertRowid)) as Record<string, unknown>;
     res.status(201).json(mapRow(created));
   } catch (err) {
@@ -79,6 +97,7 @@ router.put('/:id', authenticateAdmin, async (req: AuthRequest, res: Response): P
 
   try {
     const db = getDb();
+    console.log(`Updating menu ${id}. Body:`, JSON.stringify(req.body));
     const existing = db.prepare('SELECT id FROM menus WHERE id = ?').get(id);
     if (!existing) {
       res.status(404).json({ error: 'Menu item not found' });
@@ -87,7 +106,19 @@ router.put('/:id', authenticateAdmin, async (req: AuthRequest, res: Response): P
 
     db.prepare(
       'UPDATE menus SET name=?, description=?, price=?, portion=?, category=?, dietary=?, tag=?, img=?, available_days=?, is_tiffin=? WHERE id=?'
-    ).run(name, description || '', price, portion || '', category, dietary, serializeTags(tags), img || '', serializeDays(availableDays), isTiffin ? 1 : 0, id);
+    ).run(
+      name, 
+      description || '', 
+      price, 
+      portion || '', 
+      category, 
+      dietary, 
+      serializeTags(tags), 
+      img || '', 
+      serializeDays(availableDays), 
+      (isTiffin === true || isTiffin === 'true' || isTiffin === 1) ? 1 : 0, 
+      id
+    );
     const updated = db.prepare('SELECT * FROM menus WHERE id = ?').get(id) as Record<string, unknown>;
     res.json(mapRow(updated));
   } catch (err) {
