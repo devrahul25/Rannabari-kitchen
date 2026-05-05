@@ -110,6 +110,7 @@ export default function AdminMenuForm() {
     if (!validate()) return;
 
     setSaving(true);
+    try {
       const payload: MenuItemInput = {
         name: form.name.trim(),
         description: form.description.trim(),
